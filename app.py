@@ -10,6 +10,18 @@ from sklearn.metrics import accuracy_score, classification_report
 # ------------------------------
 # Step 1: Load YOLO Pose Model
 # ------------------------------
+# Handle PyTorch 2.6+ security restrictions
+import torch
+import ultralytics.nn.tasks
+
+# Allow ultralytics classes to be loaded safely
+torch.serialization.add_safe_globals([
+    ultralytics.nn.tasks.PoseModel,
+    ultralytics.nn.tasks.DetectionModel,
+    ultralytics.models.yolo.pose.PosePredictor,
+    ultralytics.models.yolo.detect.DetectionPredictor
+])
+
 model = YOLO("yolo11n-pose.pt")  # or yolov8n-pose.pt if using older version
 
 # ------------------------------

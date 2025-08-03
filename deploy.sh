@@ -6,23 +6,15 @@ set -e
 echo "🚀 Starting deployment of pose-classification app..."
 
 # Variables
-APP_DIR="/home/$USER/pose-classification"
-DOMAIN="your-domain.com"  # Replace with your actual domain
+APP_DIR="/root/pose-classification"
+DOMAIN="your-domain.com"  # Replace with your actual domain (e.g., pose-app.yourdomain.com)
 
 # Create app directory
-echo "📁 Creating application directory..."
-mkdir -p $APP_DIR
-cd $APP_DIR
+echo "📁 Using current directory as app directory..."
+cd /root/pose-classification
 
 # Clone or update the repository (replace with your repo URL)
-if [ ! -d ".git" ]; then
-    echo "📥 Cloning repository..."
-    # git clone https://github.com/yourusername/pose-classification.git .
-    echo "Please upload your files to $APP_DIR"
-else
-    echo "🔄 Updating repository..."
-    git pull origin main
-fi
+echo "� Files already present in current directory"
 
 # Build and start the application
 echo "🏗️ Building Docker container..."

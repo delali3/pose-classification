@@ -76,6 +76,18 @@ def initialize_session_state():
 def load_models():
     """Load YOLO model and posture classifier with error handling"""
     try:
+        # Add safe globals for YOLO model loading to handle PyTorch 2.6+ security restrictions
+        import torch
+        import ultralytics.nn.tasks
+        
+        # Allow ultralytics classes to be loaded safely
+        torch.serialization.add_safe_globals([
+            ultralytics.nn.tasks.PoseModel,
+            ultralytics.nn.tasks.DetectionModel,
+            ultralytics.models.yolo.pose.PosePredictor,
+            ultralytics.models.yolo.detect.DetectionPredictor
+        ])
+        
         model = YOLO(Config.MODEL_FILE)
         if os.path.exists(Config.CLASSIFIER_FILE):
             clf = joblib.load(Config.CLASSIFIER_FILE)

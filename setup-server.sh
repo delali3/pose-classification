@@ -4,7 +4,7 @@
 set -e
 
 echo "🚀 Setting up server for pose-classification app..."
-
+scp -r c:\xampp\htdocs\era\pose-classification root@159.223.131.64:/root/
 # Update system
 echo "📦 Updating system packages..."
 sudo apt update && sudo apt upgrade -y
