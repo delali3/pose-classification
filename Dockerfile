@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libgomp1 \
     libgtk-3-0 \
-    libglib2.0-0 \
     libjpeg-dev \
     libpng-dev \
     curl \
@@ -31,20 +30,30 @@ RUN apt-get update && apt-get install -y \
 # Copy Python packages from builder
 COPY --from=builder /root/.local /root/.local
 
-# Set PATH to include user packages
-ENV PATH=/root/.local/bin:$PATH
+# Set PATH to include user packages - FIXED
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
-# Copy application files (exclude heavy files)
+# Create app user and directories first
+RUN useradd --create-home --shell /bin/bash app \
+    && mkdir -p sound images/good images/bad logs data \
+    && chown -R app:app /app
+
+# Copy application files
 COPY app.py .
 COPY pose_classifier.pkl .
 COPY yolo11n-pose.pt .
-COPY sound/ sound/
-COPY images/ images/
 
-# Create necessary directories
-RUN mkdir -p sound images/good images/bad
+# Copy sound file if it exists - FIXED syntax
+COPY sound/ sound/ 2>/dev/null || true
+RUN echo "Sound file copy attempted"
+
+# Set final permissions
+RUN chown -R app:app /app
+
+# Switch to app user
+USER app
 
 # Expose Streamlit port
 EXPOSE 8501

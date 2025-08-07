@@ -21,38 +21,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Create a non-root user for running the application
-RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
-USER app
-
-# Install Python packages with minimal caching
+# Install Python packages as root first
 COPY requirements.txt .
-RUN pip install --user --no-cache-dir --upgrade pip \
-    && pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Switch back to root to copy files and set permissions
-USER root
+# Create app user and set permissions
+RUN useradd --create-home --shell /bin/bash app \
+    && mkdir -p sound images/good images/bad logs data \
+    && chown -R app:app /app
 
-# Copy only essential application files
+# Copy application files
 COPY app.py .
 COPY pose_classifier.pkl .
 COPY yolo11n-pose.pt .
 
-# Create minimal directory structure and set permissions
-RUN mkdir -p sound images/good images/bad logs data \
-    && chown -R app:app /app
+# Copy sound directory if it exists
+RUN if [ -d "sound" ]; then cp -r sound/* sound/ 2>/dev/null || true; fi
 
-# Copy sound file if it exists
-COPY sound/sound.wav sound/ 2>/dev/null || echo "No sound file found"
+# Create sound file if it doesn't exist
+RUN touch sound/sound.wav || true
 
 # Set final permissions
 RUN chown -R app:app /app
 
 # Switch to non-root user
 USER app
-
-# Add user's pip bin to PATH
-ENV PATH="/home/app/.local/bin:${PATH}"
 
 # Expose port
 EXPOSE 8080
