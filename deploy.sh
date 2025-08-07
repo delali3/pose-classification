@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Deployment script for pose-classification app
-set -e
+# set -e
 
 echo "🚀 Starting deployment of pose-classification app..."
 
 # Variables
 APP_DIR="/root/pose-classification"
-DOMAIN="your-domain.com"  # Replace with your actual domain (e.g., pose-app.yourdomain.com)
+DOMAIN="ghprofit.com"  # Replace with your actual domain (e.g., pose-app.yourdomain.com)
 
 # Create app directory
 echo "📁 Using current directory as app directory..."
