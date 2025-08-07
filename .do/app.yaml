@@ -1,0 +1,27 @@
+name: pose-classification
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: delali3/pose-classification
+    branch: main
+  run_command: streamlit run app.py --server.port=8080 --server.address=0.0.0.0
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 8080
+  health_check:
+    http_path: /
+  envs:
+  - key: PYTHONPATH
+    value: /app
+  - key: STREAMLIT_SERVER_PORT
+    value: "8080"
+  - key: STREAMLIT_SERVER_ADDRESS
+    value: "0.0.0.0"
+  
+# Resource allocation for smaller builds  
+region: nyc1
+domains:
+- domain: ghprofit.com
+  type: PRIMARY

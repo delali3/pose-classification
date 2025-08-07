@@ -1,13 +1,18 @@
 #!/bin/bash
 
 # Deployment script for pose-classification app
-# set -e
+set -e
 
 echo "🚀 Starting deployment of pose-classification app..."
 
 # Variables
 APP_DIR="/root/pose-classification"
 DOMAIN="ghprofit.com"  # Replace with your actual domain (e.g., pose-app.yourdomain.com)
+
+# Clean up Docker to free space
+echo "🧹 Cleaning up Docker to free space..."
+docker system prune -af --volumes
+docker builder prune -af
 
 # Create app directory
 echo "📁 Using current directory as app directory..."
