@@ -497,6 +497,16 @@ def create_analytics_dashboard(df):
     with col2:
         # Hourly posture trends
         hourly_stats = df.groupby(['Hour', 'Posture']).size().unstack(fill_value=0)
+        
+        # Ensure both 'good' and 'bad' columns exist
+        if 'good' not in hourly_stats.columns:
+            hourly_stats['good'] = 0
+        if 'bad' not in hourly_stats.columns:
+            hourly_stats['bad'] = 0
+        
+        # Reorder columns to ensure consistent ordering
+        hourly_stats = hourly_stats[['good', 'bad']]
+        
         fig_bar = px.bar(
             hourly_stats.reset_index(), 
             x='Hour', 
@@ -510,6 +520,15 @@ def create_analytics_dashboard(df):
     # Daily trends
     daily_stats = df.groupby(['Date', 'Posture']).size().unstack(fill_value=0)
     if not daily_stats.empty:
+        # Ensure both 'good' and 'bad' columns exist
+        if 'good' not in daily_stats.columns:
+            daily_stats['good'] = 0
+        if 'bad' not in daily_stats.columns:
+            daily_stats['bad'] = 0
+        
+        # Reorder columns to ensure consistent ordering
+        daily_stats = daily_stats[['good', 'bad']]
+        
         fig_daily = px.line(
             daily_stats.reset_index(), 
             x='Date', 
