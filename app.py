@@ -636,6 +636,14 @@ def main():
     with tabs[0]:
         st.markdown("### Real-time Posture Monitoring")
         
+        # Server deployment notice
+        st.info("""
+        🌐 **Server Deployment Notice**: 
+        - **Webcam**: May not work on server deployments (expected behavior)
+        - **Image Upload**: ✅ Works perfectly! Recommended for server use
+        - **Best Practice**: Take photos with your phone/camera and upload them
+        """)
+        
         # Alert system explanation
         with st.expander("🔔 Alert System Guide", expanded=False):
             st.markdown(f"""
@@ -652,6 +660,9 @@ def main():
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
             use_webcam = st.checkbox("🎥 Use Webcam (Live Detection)")
+            # Add server deployment notice
+            if use_webcam:
+                st.info("💡 **Note**: Webcam access may not work on server deployments. Use image upload for best results!")
         with col2:
             if st.button("🔇 Stop Alarm"):
                 st.session_state.beep_active = False
@@ -664,6 +675,7 @@ def main():
         # File upload
         if not use_webcam:
             uploaded_file = st.file_uploader("📤 Upload Image", type=["jpg", "jpeg", "png"])
+            st.info("📱 **Tip**: Take a photo with your phone and upload it here for posture analysis!")
         
         # Status display
         status_placeholder = st.empty()
@@ -679,69 +691,87 @@ def main():
                     st.rerun()
                 
                 # Webcam processing
-                cap = cv2.VideoCapture(0)
-                frame_count = 0
-                
-                while st.session_state.monitoring_active and cap.isOpened():
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.error("Failed to access webcam")
-                        break
+                try:
+                    cap = cv2.VideoCapture(0)
+                    if not cap.isOpened():
+                        st.error("❌ **Webcam Access Failed**")
+                        st.error("This is expected on server deployments (like DigitalOcean).")
+                        st.info("🔄 **Solution**: Use the Image Upload feature below instead!")
+                        st.session_state.monitoring_active = False
+                        st.rerun()
+                        return
                     
-                    # Process every 3rd frame for performance
-                    if frame_count % 3 == 0:
-                        results = model.predict(source=frame, save=False, verbose=False)
+                    frame_count = 0
+                    
+                    while st.session_state.monitoring_active and cap.isOpened():
+                        ret, frame = cap.read()
+                        if not ret:
+                            st.error("❌ **Failed to access webcam**")
+                            st.info("💡 **This is normal on server deployments**")
+                            st.info("📱 **Please use Image Upload instead** - it works perfectly!")
+                            break
                         
-                        if len(results[0].keypoints.data) > 0:
-                            kps = results[0].keypoints.data[0].cpu().numpy()[:, :2]
+                        # Process every 3rd frame for performance
+                        if frame_count % 3 == 0:
+                            results = model.predict(source=frame, save=False, verbose=False)
                             
-                            # Calculate distances for classification
-                            distances = []
-                            for i in range(len(kps)):
-                                for j in range(i + 1, len(kps)):
-                                    dist = np.linalg.norm(kps[i] - kps[j])
-                                    distances.append(dist)
-                            
-                            if len(distances) > 0 and clf is not None:
-                                prediction = clf.predict([distances])[0]
-                                label = Config.LABELS[prediction]
-                                confidence = max(clf.predict_proba([distances])[0])
+                            if len(results[0].keypoints.data) > 0:
+                                kps = results[0].keypoints.data[0].cpu().numpy()[:, :2]
                                 
-                                # Draw enhanced pose
-                                frame = draw_enhanced_pose(frame, kps, label, confidence)
+                                # Calculate distances for classification
+                                distances = []
+                                for i in range(len(kps)):
+                                    for j in range(i + 1, len(kps)):
+                                        dist = np.linalg.norm(kps[i] - kps[j])
+                                        distances.append(dist)
                                 
-                                # Log event
-                                log_event(label, confidence)
-                                
-                                # Track posture and get elapsed time (FIXED - always returns float)
-                                elapsed_time = track_poor_posture(label == "bad")
-                                
-                                # Update status
-                                if label == "bad" and elapsed_time > 0:
-                                    if elapsed_time < Config.NOTIFICATION_THRESHOLD:
-                                        remaining_time = Config.NOTIFICATION_THRESHOLD - elapsed_time
-                                        status_placeholder.info(f"⚠️ Poor posture detected for {elapsed_time:.1f}s. Notification in {remaining_time:.1f}s")
-                                    elif elapsed_time < Config.ALARM_THRESHOLD:
-                                        remaining_time = Config.ALARM_THRESHOLD - elapsed_time
-                                        status_placeholder.warning(f"📢 Notification shown. Alarm in {remaining_time:.1f}s")
+                                if len(distances) > 0 and clf is not None:
+                                    prediction = clf.predict([distances])[0]
+                                    label = Config.LABELS[prediction]
+                                    confidence = max(clf.predict_proba([distances])[0])
+                                    
+                                    # Draw enhanced pose
+                                    frame = draw_enhanced_pose(frame, kps, label, confidence)
+                                    
+                                    # Log event
+                                    log_event(label, confidence)
+                                    
+                                    # Track posture and get elapsed time (FIXED - always returns float)
+                                    elapsed_time = track_poor_posture(label == "bad")
+                                    
+                                    # Update status
+                                    if label == "bad" and elapsed_time > 0:
+                                        if elapsed_time < Config.NOTIFICATION_THRESHOLD:
+                                            remaining_time = Config.NOTIFICATION_THRESHOLD - elapsed_time
+                                            status_placeholder.info(f"⚠️ Poor posture detected for {elapsed_time:.1f}s. Notification in {remaining_time:.1f}s")
+                                        elif elapsed_time < Config.ALARM_THRESHOLD:
+                                            remaining_time = Config.ALARM_THRESHOLD - elapsed_time
+                                            status_placeholder.warning(f"📢 Notification shown. Alarm in {remaining_time:.1f}s")
+                                        else:
+                                            status_placeholder.error(f"🚨 Alarm triggered! Duration: {elapsed_time:.1f}s")
                                     else:
-                                        status_placeholder.error(f"🚨 Alarm triggered! Duration: {elapsed_time:.1f}s")
+                                        status_placeholder.success("✅ Good posture maintained")
                                 else:
-                                    status_placeholder.success("✅ Good posture maintained")
+                                    status_placeholder.warning("⚠️ Unable to classify posture")
                             else:
-                                status_placeholder.warning("⚠️ Unable to classify posture")
-                        else:
-                            status_placeholder.warning("⚠️ No person detected")
+                                status_placeholder.warning("⚠️ No person detected")
+                        
+                        # Display frame
+                        frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                        frame_count += 1
+                        
+                        # Small delay to prevent overwhelming
+                        time.sleep(0.1)
                     
-                    # Display frame
-                    frame_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-                    frame_count += 1
+                    cap.release()
+                    cv2.destroyAllWindows()
                     
-                    # Small delay to prevent overwhelming
-                    time.sleep(0.1)
-                
-                cap.release()
-                cv2.destroyAllWindows()
+                except Exception as e:
+                    st.error("❌ **Webcam Error**")
+                    st.error(f"Error details: {str(e)}")
+                    st.info("💡 **This is expected on server deployments**")
+                    st.info("📱 **Please use Image Upload feature instead** - it works great!")
+                    st.session_state.monitoring_active = False
         
         elif uploaded_file:
             # Process uploaded image

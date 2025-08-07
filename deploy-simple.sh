@@ -56,10 +56,24 @@ else
     cat > Dockerfile.emergency << 'EOF'
 FROM python:3.9-slim
 WORKDIR /app
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-RUN pip install streamlit numpy pandas plotly opencv-python-headless Pillow scikit-learn joblib pygame
+
+# Install system dependencies including OpenGL libraries
+RUN apt-get update && apt-get install -y \
+    curl \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages - use headless OpenCV
+RUN pip install streamlit numpy pandas plotly scikit-learn joblib pygame
+RUN pip install opencv-python-headless Pillow
 RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install ultralytics
+
 COPY app.py pose_classifier.pkl yolo11n-pose.pt ./
 RUN mkdir -p sound images/good images/bad && touch sound/sound.wav
 EXPOSE 8501

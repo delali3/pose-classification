@@ -1,4 +1,5 @@
 # Simplified requirements - let pip choose compatible versions
+# Use headless OpenCV to avoid GUI dependencies
 torch
 torchvision
 ultralytics
