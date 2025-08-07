@@ -1,6 +1,6 @@
-# Lightweight versions for deployment
-torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu
-torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cpu
+# Lightweight versions for deployment - optimized for DigitalOcean
+torch==2.0.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+torchvision==0.15.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ultralytics==8.0.196
 streamlit==1.28.1
 numpy==1.24.3
