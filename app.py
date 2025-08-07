@@ -469,7 +469,7 @@ def create_analytics_dashboard(df):
     """Create comprehensive analytics dashboard"""
     if df is None or df.empty:
         st.info("No data available for analysis")
-        return
+        return 0, 0, 0, 0.0  # Return default values instead of None
     
     # Summary statistics
     total_records = len(df)
@@ -775,7 +775,7 @@ def main():
         
         # Load and analyze data
         df = load_log_data()
-        if df is not None:
+        if df is not None and not df.empty:
             total_records, good_count, bad_count, good_percentage = create_analytics_dashboard(df)
             
             # Summary metrics
