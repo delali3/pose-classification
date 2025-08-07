@@ -10,10 +10,14 @@ APP_DIR="/root/pose-classification"
 DOMAIN="ghprofit.com"
 DOCKER_COMPOSE_FILE="docker-compose.droplet.yml"
 
+# Choose Dockerfile based on preference
+DOCKERFILE="Dockerfile.minimal"  # Options: Dockerfile.minimal, Dockerfile.cpu
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_status() {
@@ -41,6 +45,28 @@ cd $APP_DIR
 # Update repository
 print_status "🔄 Updating repository..."
 git pull origin main
+
+# Ask user which Dockerfile to use
+echo ""
+print_status "🐳 Choose Dockerfile option:"
+echo "1) Dockerfile.minimal (simplified, latest packages)"
+echo "2) Dockerfile.cpu (explicit CPU-only PyTorch)"
+echo ""
+read -p "Enter choice (1 or 2): " dockerfile_choice
+
+case $dockerfile_choice in
+    2)
+        DOCKERFILE="Dockerfile.cpu"
+        print_status "📝 Using Dockerfile.cpu for explicit CPU-only PyTorch"
+        ;;
+    *)
+        DOCKERFILE="Dockerfile.minimal"
+        print_status "📝 Using Dockerfile.minimal with simplified requirements"
+        ;;
+esac
+
+# Update docker-compose to use selected Dockerfile
+sed -i "s/dockerfile: .*/dockerfile: $DOCKERFILE/" $DOCKER_COMPOSE_FILE
 
 # Clean up Docker to free space
 print_status "🧹 Cleaning up Docker to free space..."

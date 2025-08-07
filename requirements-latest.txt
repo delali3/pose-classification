@@ -1,0 +1,15 @@
+# Alternative requirements with latest stable versions
+# This uses the latest PyTorch CPU versions which should install without issues
+
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0
+streamlit>=1.28.0
+numpy>=1.24.0
+opencv-python-headless>=4.8.0
+Pillow>=10.0.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+pandas>=2.0.0
+plotly>=5.17.0
+pygame>=2.5.0

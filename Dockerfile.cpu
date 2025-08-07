@@ -1,4 +1,4 @@
-# Optimized Dockerfile for DigitalOcean deployment
+# Optimized Dockerfile for DigitalOcean deployment - Fixed PyTorch CPU installation
 FROM python:3.9-slim
 
 # Set environment variables
@@ -23,15 +23,16 @@ WORKDIR /app
 
 # Create a non-root user for running the application
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
-USER app
 
-# Install Python packages with minimal caching
-COPY requirements.txt .
-RUN pip install --user --no-cache-dir --upgrade pip \
-    && pip install --user --no-cache-dir -r requirements.txt
+# Install PyTorch CPU version first (this ensures we get the CPU-only version)
+RUN pip install --no-cache-dir \
+    torch==2.0.1+cpu \
+    torchvision==0.15.2+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# Switch back to root to copy files and set permissions
-USER root
+# Copy requirements file (without torch/torchvision)
+COPY requirements-no-torch.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy only essential application files
 COPY app.py .
@@ -50,9 +51,6 @@ RUN chown -R app:app /app
 
 # Switch to non-root user
 USER app
-
-# Add user's pip bin to PATH
-ENV PATH="/home/app/.local/bin:${PATH}"
 
 # Expose port
 EXPOSE 8080

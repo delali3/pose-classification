@@ -1,6 +1,4 @@
-# Simplified requirements - let pip choose compatible versions
-torch
-torchvision
+# Requirements without torch/torchvision (installed separately in Dockerfile)
 ultralytics
 streamlit
 numpy
